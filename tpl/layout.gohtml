@@ -1,0 +1,28 @@
+{{define "layout"}}<!DOCTYPE html>
+<html>
+	<head>
+		<title>Badgerodon</title>
+		<script src="//use.typekit.net/gwl4deq.js"></script>
+		<script>try{Typekit.load();}catch(e){}</script>
+
+		<link rel="icon" type="image/png" href="{{asset_url "img/favicon.ico"}}" />
+
+		<link href="{{asset_url "css/normalize.css"}}" type="text/css" rel="stylesheet">
+		<link href="{{asset_url "css/pygments.css"}}" type="text/css" rel="stylesheet">
+		<link href="{{asset_url "css/main.css"}}" type="text/css" rel="stylesheet">
+
+		<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+		<script src="https://www.google.com/jsapi"></script>
+		<script src="{{asset_url "js/main.js"}}"></script>
+	</head>
+	<body>
+		{{.Body}}
+		<div class="main-footer">
+			Unless otherwise noted, the content of this page is licensed under a
+			<a href="http://creativecommons.org/licenses/by/4.0/">Creative Commons
+			Attribution 4.0 International License</a> and source code is licensed
+			under an <a href="/license">MIT license</a>.
+		</div>
+	</body>
+</html>
+{{end}}

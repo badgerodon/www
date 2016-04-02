@@ -1,0 +1,146 @@
+@import url(//fonts.googleapis.com/css?family=Source+Code+Pro);
+
+html, body {
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	font-family: museo-sans, sans-serif;
+	font-size: 16px;
+	color: #333;
+}
+
+h1, h2, h3, h4, h5 {
+	font-family: museo-slab, serif;
+	font-size: 18px;
+	font-weight: 700;
+	margin: 32px 0 16px;
+}
+h1 {
+	font-size: 40px;
+	text-align: center;
+	font-weight: 800;
+	margin: 24px 0 24px;
+}
+
+h2 {
+	font-size: 20px;
+}
+
+p {
+	margin: 16px 0;
+}
+p, dd, li {
+	line-height: 1.4em;
+}
+li {
+	margin-top: 12px;
+}
+li:first-child {
+	margin-top: 0;
+}
+
+.toc li {
+	margin-top: 4px;
+}
+
+a, a:active, a:hover, a:visited {
+	color: #00A;
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+
+code, pre {
+	font-family: "Source Code Pro", monospace;
+	font-size: 13px;
+	margin: 0;
+	border-radius: 4px;
+	padding: 2px 4px;
+	background: #f5f2f0;
+}
+.highlight {
+	margin: 16px 0;
+}
+.highlight > pre {
+	padding: 8px;
+	border-radius: 8px;
+	border: 1px solid #F0EAE9;
+}
+
+
+.main-header, .main-body, .main-footer {
+	max-width: 700px;
+	margin: 0 auto;
+	box-sizing: border-box;
+	padding: 16px;
+}
+
+.main-header {
+	font-weight: bold;
+	font-size: 16px;
+	padding-bottom: 0;
+}
+
+.main-body {
+	text-align: justify;
+}
+
+.main-footer {
+	font-size: 10px;
+	padding-top: 0;
+	margin-top: 40px;
+}
+
+.logo {
+	margin: 16px auto;
+	display: block;
+	max-width: 80%;
+}
+
+dl {
+	padding: 0 24px;
+}
+dt {
+	font-weight: bold;
+	margin-top: 24px;
+	margin-bottom: 4px;
+}
+dt:first-child {
+	margin-top: 0;
+}
+dd {
+	margin: 0;
+}
+
+
+#rbsa-form table {
+  width: 250px;
+  float: left;
+  clear:left;
+  border: 1px solid #CCC;
+  border-collapse: collapse;
+	font-size: 14px;
+}
+#rbsa-form .chart {
+  float: left;
+  width: 250px;
+}
+#rbsa-form th, #rbsa-form td {
+  border: 1px solid #CCC;
+  padding: 2px 5px;
+}
+#rbsa-form td.amount {
+  text-align: right;
+}
+
+.error {
+  background: #FFCCCC;
+  padding: 10px;
+  border-radius:5px;
+  border: 1px solid #990000;
+  margin: 20px 0;
+	color: maroon;
+}

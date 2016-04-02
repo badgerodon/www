@@ -1,0 +1,623 @@
+{{define "stack/index"}}
+<div class="main-header">
+	<div class="breadcrumbs"><a href="/">Badgerodon</a> / <a href="/stack">Stack</a></div>
+</div>
+<div class="main-body">
+<h1>The Badgerodon Stack</h1>
+<p>
+	The Badgerodon Stack is a simple, cross-platform, open-source, pull-based
+	deployment system for web applications.
+</p>
+<ul class="toc">
+	<li><a href="#overview">Overview</a></li>
+	<li><a href="#usage">Usage</a></li>
+	<li><a href="#walkthrough">Walkthrough</a></li>
+	<ul>
+		<li><a href="#python">Python</a></li>
+		<li><a href="#redis">Redis</a></li>
+		<li><a href="#storage">Storage</a></li>
+		<li><a href="#machine-setup">Machine Setup</a></li>
+		<ul>
+			<li><a href="#upstart">Upstart</a></li>
+		</ul>
+		<li><a href="#deployment">Deployment</a></li>
+		<li><a href="#user-data">User Data</a></li>
+	</ul>
+	<li><a href="#releases">Releases</a></li>
+</ul>
+<a name="overview"></a>
+<h2>Overview</h2>
+<p>
+	A typical web applications is made up of several components:
+</p>
+<ul>
+	<li>The frontend code written in HTML, CSS and Javascript and run in the
+		user's browser</li>
+	<li>The web application that handles HTTP requests and serves the frontend
+		code</li>
+	<li>A backend database where data is stored</li>
+	<li>A reverse proxy or load balancer which sits in front of the web
+		application (or hosts it via fastcgi or mod_* in apache)</li>
+	<li>And other various service applications (email, queues, workers, ...) which
+		may themselves be restful HTTP servers, or implement some other RPC
+		mechanism (thrift, protobuf, ...)</li>
+</ul>
+<p>
+	In general web developers focus on the frontend and web application code (with
+	some SQL thrown in for good measure). Configuring services, standing up
+	machines, monitoring performance and downtime and deploying new releases are
+	all activities which they'd rather not spend a lot of time focusing on. In
+	larger companies there is usually an Operations team which can manage a lot of
+	these tasks. But an Operations team is not always available. So how can a web
+	developer perform these activities without it becoming a huge burden?
+</p>
+<p>
+	The Badgerodon Stack is designed to solve 3 of these problems: It handles the
+	configuration of applications via environmental variables or config files, it
+	handles the lifecycle of applications and which machines they run on and it
+	also handles deployment.
+</p>
+<p>
+	More of a methodology than an application, the Badgerodon Stack involves
+	several concepts:
+</p>
+<dl>
+	<dt>Stack</dt>
+	<dd>The collection of software needed to run a complete web application. For
+		example: the LAMP stack (linux, apache, mysql, php).</dd>
+
+	<dt>Application</dt>
+	<dd>An executable program. Applications have a  binary
+		(<code>/bin/ls</code>), zero or more options when executed
+		(<code>/bin/ls -a /some/directory</code>) and a set of
+		environmental variables (<code>PATH=/home/user/bin</code>). Applications are
+		called services if they are meant to run continuosly.</dd>
+
+	<dt>Archive</dt>
+	<dd>A <code>.tar.gz</code> or <code>.zip</code> file which contains an
+		application and any other files it needs to run. The Badgerodon Stack
+		extracts the contents of this archive and executes the application according
+		to the machine config file.
+		</dd>
+
+	<dt>Machine Config File</dt>
+	<dd>A description of all the applications a machine should run: where those
+		applications come from, the binary path and options used to start the
+		application, a set of environmental variables to pass to the application and
+		possibly symlink definitions or even directly embedded config files.</dd>
+</dl>
+<div style="text-align: center;">
+	<img src="{{asset_url "img/badgerodon-stack-illustration.png"}}" alt="illustration">
+</div>
+<a name="usage"></a>
+<h2>Usage</h2>
+<p>
+	Usage is straightforward. First create a config file which describes all the
+	applications you would like to run on the machine:
+</p>
+<code data-lexer="yaml">
+applications:
+- name: example
+  source: s3://example-bucket/stack/releases/example/v123.tar.gz
+  service:
+    command: [bin/example some argument]
+    environment:
+      MY_VAR: "some value"
+</code>
+<p>
+	Next run the stack application with options that direct it to watch this
+	config file and react accordingly whenever it is changed:
+</p>
+<code data-lexer="shell">
+stack watch s3://example-bucket/stack/machine-1.yaml
+</code>
+<p>
+	All of the applications will be downloaded, extracted and services will be
+	created and started (according to the service mechanism available on the
+	machine: systemd, upstart, etc...). If the config file changes applications
+	will be updated so that they are brought into alignment with the config file.
+</p>
+<p>
+	This is why the Badgerodon Stack is a pull-based deployment system. To release
+	a new version of your application, build and bundle it as a new archive
+	(<code>example/v124.tar.gz</code>) and then update the config file.
+</p>
+
+<a name="walkthrough"></a>
+<h2>Walkthrough</h2>
+<p>
+	Perhaps the best way to understand the Badgerodon Stack is to see it in action. So lets
+	build a simple web application: a link shortening service. Our service will consist
+	of 2 applications:
+</p>
+<ul>
+	<li>A python application built on top of flask which will handle 2 HTTP endpoints: one
+	to generate links and another to follow them</li>
+	<li>A Redis database which will store the links</li>
+</ul>
+<p>
+	We will deploy these 2 applications on a single linux machine. (I will be
+	using a virtual machine with virtual box, but a cloud vm or nitrous.io box
+	would work just	as well)
+</p>
+<a name="python"></a>
+<h3>The Python Application</h3>
+<p>
+	We will start by creating a simple python script in
+	<code>stack-example/links/links.py</code>:
+</p>
+<code data-lexer="python">
+import os
+import redis
+import uuid
+from flask import Flask, redirect, request
+
+# get config from the environment
+redis_hostname = os.getenv("REDIS_HOSTNAME", "localhost")
+port = int(os.getenv("PORT", "5000"))
+
+# connect to redis
+r = redis.StrictRedis(host=redis_hostname, port=6379, db=0)
+
+# create our app
+app = Flask(__name__)
+
+# post to /links to create a link
+@app.route("/links", methods=["POST"])
+def put_link():
+    if "url" in request.form:
+        link_id = str(uuid.uuid4())
+        r.set(link_id, request.form["url"])
+        return link_id
+    else:
+        return "Expected URL", 400
+
+# get /links/&lt;link_id&gt; to redirect to the saved url
+@app.route("/links/&lt;link_id&gt;")
+def links(link_id):
+    url = r.get(link_id)
+    if url:
+        return redirect(url)
+    else:
+        return "Link Not Found", 404
+
+# run the app
+if __name__ == "__main__":
+    app.debug = True
+    app.run(port=port)
+</code>
+<p>
+	This simple app depends on python and two libraries: <code>redis</code> and
+	<code>flask</code>. For development we can just install python (via
+	<code>apt-get</code> or similar), and then use <code>pip</code> to install the
+	libraries. But this setup won't work for the Badgerodon Stack because the
+	eventual server we plan to run the application on doesn't	have these
+	installed.
+</p>
+<p>
+	So we have to bundle our application so it has no dependencies. Typically we
+	would use a build server to do this (like Jenkins), which would also free us
+	to use whatever operating system we wanted for local development. We would
+	commit our code to Github (or similar) and Jenkins would listen for changes to
+	the repository. It knows how to pull down the code and build the project
+	accordingly. (This is known as continuous integration)
+</p>
+<p>
+	But for this example we will just do the build locally. For python we can
+	use <a href="https://github.com/pyinstaller/pyinstaller/wiki">pyinstaller</a>.
+	It can be run with: (assuming you're in the same folder as the python file)
+</p>
+<code data-lexer="shell">
+pyinstaller -F links.py
+</code>
+<p>
+	This will create an executable (<code>dist/links</code>) which can be run
+	with no dependencies. All that remains is to package it in a
+	<code>.tar.gz</code> file:
+</p>
+<code data-lexer="shell">
+tar -czf links.tar.gz -C dist links
+</code>
+<p>
+	Remembering all these steps may be a bit tedious, so here's a build script
+	which automates this process.
+</p>
+<code data-lexer="bash">
+#!/bin/bash
+ARCHIVE_NAME=links.tar.gz
+rm -rf /tmp/links-build
+mkdir -p /tmp/links-build
+cp links.py /tmp/links-build
+pushd /tmp/links-build
+pyinstaller -F links.py
+tar -czf $ARCHIVE_NAME -C dist links
+popd
+mv /tmp/links-build/$ARCHIVE_NAME ./
+</code>
+<p>
+	Name it <code>build.sh</code>, put it in the same directory as <code>links.py</code>
+	and then every time you run it, it will create the archive for you.
+</p>
+<p>
+	So far we have a directory tree that looks like this:
+</p>
+<code data-lexer="text">
+stack-example/
+  links/
+    links.py
+    build.sh
+    links.tar.gz
+</code>
+<a name="redis"></a>
+<h3>Redis</h3>
+<p>
+	Now we need to create our redis application. First we need to download the
+	redis source code from here: <a href="http://download.redis.io/releases/redis-2.8.19.tar.gz">download.redis.io/releases/redis-2.8.19.tar.gz</a>.
+	Create a directory we can work from, and extract it there. You should have a
+	redis-2.8.19 subfolder. In that folder you should be able to build the app by
+	running <code>make</code>, which creates an executable in the <code>src</code>
+	folder named <code>redis-server</code>. All we need to do is take that
+	executable and put it in another .tar.gz archive.
+</p>
+<p>
+	As before, here's a build script that will make redis for us:
+</p>
+<code data-lexer="bash">
+#!/bin/bash
+ARCHIVE_NAME=redis.tar.gz
+REDIS_VERSION=2.8.19
+if [ ! -f /tmp/redis-$REDIS_VERSION.tar.gz ]; then
+	curl -o /tmp/redis-$REDIS_VERSION.tar.gz http://download.redis.io/releases/redis-$REDIS_VERSION.tar.gz
+fi
+rm -rf /tmp/redis-build
+mkdir -p /tmp/redis-build
+pushd /tmp/redis-build
+tar -xzf /tmp/redis-$REDIS_VERSION.tar.gz
+cd redis-$REDIS_VERSION
+make
+tar -czf /tmp/redis-build/redis.tar.gz -C /tmp/redis-build/redis-$REDIS_VERSION/src redis-server
+popd
+mv /tmp/redis-build/redis.tar.gz ./
+</code>
+<p>
+	That will create the archive for you. To recap here is what our directory tree
+	looks like so far:
+</p>
+<code data-lexer="text">
+stack-example/
+  links/
+    links.py
+    build.sh
+    links.tar.gz
+  redis/
+    build.sh
+    redis.tar.gz
+</code>
+<p>
+	Redis is different from our python application in 2 significant ways:
+</p>
+<ul>
+	<li>Though it can be run directly from the command line, Redis is usually
+		configured for your specific needs via a config file. We will come back to
+		this topic later.
+	</li>
+	<li>Redis is a stateful application. Though you can certainly run it as a
+		volatile, pure in-memory application, you probably want to store off its
+		data somewhere so you don't lose everything on a restart. As with any
+		database there are various ways to accomplish this (EBS volumes, periodic
+		backups, master-slave replication, etc...) but crucially this isn't
+		something the Badgerodon Stack does for you. For this simple example we
+		will just ignore the issue and let a restart flush our data.
+	</li>
+</ul>
+<a name="storage"></a>
+<h3>Storage</h3>
+<p>
+	Now that we have our applications built and bundled we can move on to deployment.
+	But before we do that, we need to decide how we want to store our releases.
+	There are lots of options (you can find a complete list in the documentation),
+	but for demonstration purposes we will store releases and config on
+	<a href="https://drive.google.com">Google Drive</a>.
+</p>
+<p>
+	If you don't have a google account go ahead and make one. You will need to
+	generate a json block of credentials for the stack application to list,
+	retrieve and upload files. To do this run this command and follow the
+	instructions:
+</p>
+<code data-lexer="shell">
+stack auth gdrive
+</code>
+<p>
+	You should get a json block like this:
+</p>
+<code data-lexer="json">
+{
+  "access_token": "...",
+  "token_type": "Bearer",
+  "refresh_token": "...",
+  "expiry": "..."
+}
+</code>
+<p>
+	You can save that block into a file (for example
+	<code>$HOME/gdrive-credentials.json</code>) and pass it to the stack
+	application via an environmental variable
+	(<code>GOOGLE_DRIVE_CREDENTIALS_FILE</code>). Try it now:
+</p>
+<code data-lexer="shell">
+env GOOGLE_DRIVE_CREDENTIALS_FILE=$HOME/gdrive-credentials.json \
+stack ls gdrive://
+</code>
+<p>
+	Other providers and options can be found in the project
+	<a href="https://github.com/badgerodon/stack">readme</a>.
+</p>
+<p>
+	Assuming everything worked, create a machine config file that looks like this:
+	(in <code>stack-example/config/machine-1.yaml</code>)
+</p>
+<code data-lexer="yaml">
+applications:
+- name: links
+  source: gdrive://stack-example/releases/links/v1.tar.gz
+  service:
+    command: [links]
+- name: redis
+  source: gdrive://stack-example/releases/redis/v1.tar.gz
+  service:
+    command: [redis-server]
+</code>
+<p>
+	Upload the config file and the two archives to google drive in their
+	appropriate locations. You can use the web UI for this, or you can use the
+	stack application directly:
+</p>
+<code data-lexer="shell">
+stack cp config/machine-1.yaml gdrive://stack-example/config/machine-1.yaml
+stack cp links/links.tar.gz    gdrive://stack-example/releases/links/v1.tar.gz
+stack cp redis/redis.tar.gz    gdrive://stack-example/releases/redis/v1.tar.gz
+</code>
+<p>
+	Incidentally you could also update the build scripts to copy the archives to
+	their final destination, using <code>stack ls</code> to figure out the next
+	version number.
+</p>
+<a name="machine-setup"></a>
+<h3>Machine Setup</h3>
+<p>
+	Now we need to setup the machine. This is done in 4 easy steps:
+</p>
+<ol>
+	<li>Copy the credentials file you generated earlier to the server: (your
+		hostname/ip will probably be different)
+<code data-lexer="shell">
+scp $HOME/gdrive-credentials.json 192.168.56.101:/opt/gdrive-credentials.json
+</code>
+	</li>
+	<li>Login to your server:
+<code data-lexer="shell">
+ssh 192.168.56.101
+</code>
+	</li>
+	<li>Download the Badgerodon Stack application and put it somewhere on the path:
+<code data-lexer="shell">
+curl -L https://github.com/badgerodon/stack/releases/download/{{.StackVersion}}/stack-linux-amd64-{{.StackVersion}}.tar.gz \
+| sudo tar -C /usr/bin -xz
+</code>
+	</li>
+	<li>Record the path to your config file (for example
+		<code>gdrive://stack/config/machine-1.yaml</code>) and pass it to the stack
+		apply command:
+<code data-lexer="shell">
+sudo env GOOGLE_DRIVE_CREDENTIALS_FILE=/opt/gdrive-credentials.json \
+stack apply gdrive://stack-example/config/machine-1.yaml
+</code>
+	</li>
+</ol>
+<p>
+	We can confirm that our applications were started by running:
+</p>
+<code data-lexer="shell">
+ps axf | grep badgerodon-stack
+</code>
+<p>
+	You should see something like this:
+</p>
+<code data-lexer="text">
+14879 ?        Ss     0:00 /opt/badgerodon-stack/applications/links/links
+14881 ?        S      0:00  \_ /opt/badgerodon-stack/applications/links/links
+14889 ?        S      0:00      \_ /opt/badgerodon-stack/applications/links/links /opt/badgerodon-stack/applications/links/links
+14890 ?        Sl     0:02          \_ /opt/badgerodon-stack/applications/links/links /opt/badgerodon-stack/applications/links/links
+14883 ?        Ssl    0:01 /opt/badgerodon-stack/applications/redis/redis-server *:6379
+</code>
+<p>
+	Now we can test that our application does in fact work. POST a link to our
+	service like this:
+</p>
+<code data-lexer="shell">
+curl --data 'url=http://labs.bible.org/api/?passage=John+3:16' localhost:5000/links
+</code>
+<p>
+	You can use telnet to see what got stored in redis:
+</p>
+<code data-lexer="shell">
+telnet localhost 6379
+keys *
+</code>
+<p>
+	One of the keys should be a UUID (for example
+	<code>45429f7c-fd70-4e70-bd11-8bed0862b2dc</code>). Type <code>quit</code> to
+	exit telnet. <code>GET</code>ting that	UUID from our link service will
+	redirect you to what was stored:
+</p>
+<code data-lexer="shell">
+curl -L localhost:5000/links/{THE_UUID_FROM_BEFORE}
+</code>
+<p>
+	And you should see:
+</p>
+<code data-lexer="text">
+&lt;b>3:16&lt;/b> For this is the way God loved the world: He gave his one and only Son, so that everyone who believes in him will not perish but have eternal life.
+</code>
+<p>
+	So our service works, but we still need to setup the stack application so that
+	it will pick up changes automatically. For that we need to use the
+	<code>watch</code> command instead of <code>apply</code>, and we need to
+	make it so our application runs on boot (and continuously).
+</p>
+<p>
+	The way this is done depends on the init system your operating system uses.
+	For Ubuntu that means Upstart.
+</p>
+<a name="upstart"></a>
+<h4>Upstart</h4>
+<p>
+	First create a config file in
+	<code>/etc/init/badgerodon-stack.conf</code>:
+</p>
+<code data-lexer="text">
+description "The Badgerodon Stack"
+
+start on (started networking)
+respawn
+
+env GOOGLE_DRIVE_CREDENTIALS_FILE=/opt/gdrive-credentials.json
+exec /usr/bin/stack watch gdrive://stack-example/config/machine-1.yaml
+</code>
+<p>
+	To start the application run:
+</p>
+<code data-lexer="shell">
+initctl start badgerodon-stack
+</code>
+
+<h3>Deployment</h3>
+<p>
+	With the Badgerodon Stack watch service running we should now be able makes
+	changes to the config file and those changes will be picked up automatically.
+</p>
+<p>
+	Let's make it so that our redis data is saved to the hard drive. To do this
+	we need to create a config file for Redis that tells it to sync
+	the database to disk. There are three approaches we could take:
+</p>
+<ul>
+	<li>We could directly embed the config file into the release itself</li>
+	<li>We could embed several config files (perhaps for different environments or
+		machines) and symlink the appropriate one on deploy</li>
+	<li>We could directly embed the config file in the machine config file</li>
+</ul>
+<p>
+	The first option is pretty straightforward (just keep in mind that
+	applications are run with a working directory set to the contents of the
+	archive). The second can be done with the special <code>links</code> property:
+</p>
+<code data-lexer="yaml">
+applications:
+- name: redis
+  links:
+    redis.conf: config/dev.conf
+</code>
+<p>
+	But let's go with the third option since it makes it easier for us to update
+	configuration without requiring a complete rebuild of the release. We use the
+	special <code>files</code> property, and the fact that YAML has good support
+	for embedded string blocks.
+</p>
+<code data-lexer="yaml">
+applications:
+- name: links
+  source: gdrive://stack-example/releases/links/v1.tar.gz
+  service:
+  command: [links]
+- name: redis
+  source: gdrive://stack-example/releases/redis/v1.tar.gz
+  files:
+    redis.conf: |
+      bind 127.0.0.1
+      port 6379
+      dir /opt/
+      appendonly yes
+      appendfilename "redis.aof"
+      appendfsync everysec
+      auto-aof-rewrite-percentage 100
+      auto-aof-rewrite-min-size 64mb
+      aof-load-truncated yes
+  service:
+    command: [redis-server, redis.conf]
+</code>
+<p>
+	<code>files</code> maps file names to their contents, so the stack application
+	will create a <code>redis.conf</code> file when this configuration is applied.
+	We also modified the service command so that it uses the config file.
+	Consult the
+	<a href="https://github.com/antirez/redis/blob/unstable/redis.conf">Redis
+		documentation</a> for the meanings of the various config statements.
+</p>
+<p>
+	Simply re-upload the config file to trigger a re-deploy. It should take about
+	15 seconds for the changes to be applied.
+</p>
+<code data-lexer="shell">
+stack cp config/machine-1.yaml gdrive://stack-example/config/machine-1.yaml
+</code>
+<a name="user-data"></a>
+<h3>User Data</h3>
+<p>
+	Now that we have one server setup, the process for setting up additional
+	servers is exactly the same: just point <code>stack watch</code> to a
+	different config file (or even re-use the same config file). There is, however
+	an additional automation step we can take to make this easier.
+</p>
+<p>
+	When you create a virtual machine on any of the cloud providers
+	(Amazon, Google, Digital Ocean, ...) you can specify a script to run on boot.
+	Here's an example script which does this:
+</p>
+<code data-lexer="bash">
+#!/bin/bash
+# save the credentials
+cat << EOF > /opt/gdrive-credentials.json
+{
+  "access_token": "...",
+  "token_type": "Bearer",
+  "refresh_token": "...",
+  "expiry": "..."
+}
+EOF
+
+# save the init script
+cat << EOF > /etc/init/badgerodon-stack.conf
+description "The Badgerodon Stack"
+
+start on (started networking)
+respawn
+
+env GOOGLE_DRIVE_CREDENTIALS_FILE=/opt/gdrive-credentials.json
+exec /usr/bin/stack watch gdrive://stack-example/config/machine-1.yaml
+EOF
+
+# install curl (usually installed by default, but not always)
+apt-get install -y curl
+
+# download the Badgerodon Stack application and put it in /usr/bin
+curl -L https://github.com/badgerodon/stack/releases/download/{{.StackVersion}}/stack-linux-amd64-{{.StackVersion}}.tar.gz \
+| tar -C /usr/bin -xz
+
+# start it
+initctl start badgerodon-stack
+</code>
+<p>
+	With this script in place we can now spin up new machines that are configured
+	entirely by declarative yaml files. No commands are necessary and updates are
+	as simple as merely editing a file.
+</p>
+<a name="releases"></a>
+<h2>Releases</h2>
+<p>
+	The Badgerodon Stack is beta-quality software. Releases and source code are
+	available on
+	<a href="https://github.com/badgerodon/stack">GitHub</a>.
+</p>
+{{end}}

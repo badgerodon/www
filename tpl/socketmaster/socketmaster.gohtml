@@ -1,0 +1,228 @@
+{{define "socketmaster/index"}}
+<div class="main-header">
+	<div class="breadcrumbs"><a href="/">Badgerodon</a> / <a href="/socketmaster">socketmaster</a></div>
+</div>
+<div class="main-body">
+  <h1>socketmaster</h1>
+  <p>
+  	A zero-configuration reverse proxy.
+  </p>
+  <ul class="toc">
+  	<li><a href="#overview">Overview</a></li>
+  	<li><a href="#design">Design</a></li>
+  	<li><a href="#usage">Usage</a></li>
+  	<li><a href="#source">Source Code</a></li>
+  	<li><a href="#caveats">Caveats</a></li>
+  </ul>
+  <a name="overview"></a>
+  <h2>Overview</h2>
+  <p>
+    <code>socketmaster</code> is a reverse proxy written in Go. It listens on a
+    local network port for downstream services which configure upstream sockets
+    on-demand rather than via a config file.
+  </p>
+  <p>
+    It's designed to solve two problems:
+  </p>
+  <ol>
+    <li>
+      Running multiple applications which need to bind the same port but only
+      receive the traffic that was meant for them. For example:
+      <code>api.example.com</code> should go to the <code>api</code> service and
+      <code>www.example.com</code> should go to the <code>www</code> service,
+      even though both services are running on the same port (443 or 80) on the
+      same machine.
+    </li>
+    <li>
+      Restarting an application without severing the upstream connection. For
+      example if we redeploy the <code>api</code> service a request may take a
+      little longer, but otherwise the user would have no idea a deployment
+      happened. (They won't see a 404 or 500 error)
+    </li>
+  </ol>
+  <a name="design"></a>
+  <h2>Design</h2>
+  <p>
+    <code>socketmaster</code> listens on a control socket (it defaults to
+    <code>127.0.0.1:9999</code>) for downstream connections. When one comes in
+    there's a custom handshake that occurs where the downstream client tells
+    the socket master which port to listen on:
+  </p>
+  <code data-lexer="go">
+li, err := client.Listen(protocol.SocketDefinition{
+	Port: 443,
+	HTTP: &protocol.SocketHTTPDefinition{
+		DomainSuffix: "example.com",
+	},
+})
+http.Serve(li, nil)
+  </code>
+  <p>
+    In this example all https traffic for example.com would be forwarded to
+    this Go program and served by Go's default http server.
+  </p>
+  <p>
+    The socket master creates (or reuses) an upstream listener on the requested
+    port and starts forwarding traffic to the service. The downstream connection
+    is converted into a <code>net.Listener</code> with the
+    <a href="https://github.com/hashicorp/yamux">yamux</a> library and all
+    upstream connections are multiplexed onto a single downstream connection.
+  </p>
+  <p>
+    When a downstream connection is severed the socket master removes it from
+    it's routing pool. The upstream listener is kept alive for 30 seconds and
+    connections are queued up. If the service comes back in that time, then
+    those connections will be resolved. If not they will be closed.
+  </p>
+  <p>
+    Except for the control port, all configuration is done on-demand. There are
+    no files to manage, and other than starting the socket master beforehand,
+    no coordination is required for deployments.
+  </p>
+  <a name="usage"></a>
+  <h2>Usage</h2>
+  <p>
+    Install Go, then run:
+  </p>
+  <code data-lexer="shell">go get github.com/badgerodon/socketmaster/...</code>
+  <p>
+    This will create a <code>socketmaster</code> command in
+    <code>GOPATH/bin</code>. Run it:
+  </p>
+  <code data-lexer="shell">socketmaster</code>
+  <p>
+    Now create an <code>a.go</code> file anywhere you'd like (perhaps in
+    <code>/tmp/a.go</code>):
+  </p>
+  <code data-lexer="go">
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
+	"github.com/badgerodon/socketmaster/client"
+	"github.com/badgerodon/socketmaster/protocol"
+)
+
+func main() {
+	li, err := client.Listen(protocol.SocketDefinition{
+		Port: 8000,
+		HTTP: &protocol.SocketHTTPDefinition{
+			PathPrefix: "/a",
+		},
+	})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer li.Close()
+
+	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
+		io.WriteString(res, "From A")
+	})
+	err = http.Serve(li, nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+  </code>
+  <p>
+    Run it (in another terminal):
+  </p>
+  <code data-lexer="shell">
+    go run a.go
+  </code>
+  <p>
+    And <code>localhost:8000/a/</code> should now be accessible (once again in
+    another terminal):
+  </p>
+  <code data-lexer="shell">
+    curl localhost:8000/a/
+  </code>
+  <p>
+    This is hitting the socket master, which is then proxying the request to
+    <code>a.go</code>. Let's add a <code>b.go</code> (very much like
+    <code>a.go</code>) to illustrate how multiple services can listen on the
+    same port:
+  </p>
+  <code data-lexer="go">
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
+	"github.com/badgerodon/socketmaster/client"
+	"github.com/badgerodon/socketmaster/protocol"
+)
+
+func main() {
+	li, err := client.Listen(protocol.SocketDefinition{
+		Port: 8000,
+		HTTP: &protocol.SocketHTTPDefinition{
+			PathPrefix: "/b",
+		},
+	})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer li.Close()
+
+	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
+		io.WriteString(res, "From B")
+	})
+	err = http.Serve(li, nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+  </code>
+  <p>
+    <code>/a/</code> gives you <code>From A</code> now, and <code>/b/</code>
+    gives you <code>From B</code>:
+  </p>
+  <code data-lexer="shell">
+curl localhost:8000/a/
+curl localhost:8000/b/
+  </code>
+  <p>
+    You can also route based on <code>DomainSufix</code>, or not use HTTP at all
+    (in which case the socket master merely copies the data in both directions).
+    The socket master can also terminate TLS connections:
+  </p>
+  <code data-lexer="go">
+li, err := client.Listen(protocol.SocketDefinition{
+	Port: 443,
+	TLS: &protocol.SocketTLSDefinition{
+		Cert: tlsCert,
+		Key:  tlsKey,
+	},
+})
+  </code>
+  <p>
+    <code>TLS.Cert</code> and <code>TLS.Key</code> are PEM encoded strings. For
+    an example just run:
+  </p>
+  <code data-lexer="shell">cat ~/.ssh/id_rsa</code>
+  <a name="source"></a>
+  <h2>Source Code</h2>
+  <p>
+    Source code is available on
+    <a href="https://github.com/badgerodon/socketmaster">GitHub</a>.
+  </p>
+  <a name="caveats"></a>
+  <h2>Caveats</h2>
+  <p>
+    Since this library was thrown together in a couple days and isn't
+    particularly well tested, you should probably use nginx or haproxy instead.
+  </p>
+</div>
+{{end}}
