@@ -1,0 +1,5 @@
+<div class="highlight"><pre><span class="l-Scalar-Plain">applications</span><span class="p-Indicator">:</span>
+<span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">redis</span>
+  <span class="l-Scalar-Plain">links</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">redis.conf</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">config/dev.conf</span>
+</pre></div>

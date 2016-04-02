@@ -1,0 +1,32 @@
+<div class="highlight"><pre><span class="c">#!/bin/bash</span>
+<span class="c"># save the credentials</span>
+cat <span class="s">&lt;&lt; EOF &gt; /opt/gdrive-credentials.json</span>
+<span class="s">{</span>
+<span class="s">  &quot;access_token&quot;: &quot;...&quot;,</span>
+<span class="s">  &quot;token_type&quot;: &quot;Bearer&quot;,</span>
+<span class="s">  &quot;refresh_token&quot;: &quot;...&quot;,</span>
+<span class="s">  &quot;expiry&quot;: &quot;...&quot;</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+
+<span class="c"># save the init script</span>
+cat <span class="s">&lt;&lt; EOF &gt; /etc/init/badgerodon-stack.conf</span>
+<span class="s">description &quot;The Badgerodon Stack&quot;</span>
+
+<span class="s">start on (started networking)</span>
+<span class="s">respawn</span>
+
+<span class="s">env GOOGLE_DRIVE_CREDENTIALS_FILE=/opt/gdrive-credentials.json</span>
+<span class="s">exec /usr/bin/stack watch gdrive://stack-example/config/machine-1.yaml</span>
+<span class="s">EOF</span>
+
+<span class="c"># install curl (usually installed by default, but not always)</span>
+apt-get install -y curl
+
+<span class="c"># download the Badgerodon Stack application and put it in /usr/bin</span>
+curl -L https://github.com/badgerodon/stack/releases/download/v0.3/stack-linux-amd64-v0.3.tar.gz <span class="se">\</span>
+<span class="p">|</span> tar -C /usr/bin -xz
+
+<span class="c"># start it</span>
+initctl start badgerodon-stack
+</pre></div>

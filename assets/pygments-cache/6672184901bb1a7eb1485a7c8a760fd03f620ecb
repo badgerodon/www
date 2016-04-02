@@ -1,0 +1,8 @@
+<div class="highlight"><pre><span class="nx">li</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nx">Listen</span><span class="p">(</span><span class="nx">protocol</span><span class="p">.</span><span class="nx">SocketDefinition</span><span class="p">{</span>
+	<span class="nx">Port</span><span class="p">:</span> <span class="mi">443</span><span class="p">,</span>
+	<span class="nx">HTTP</span><span class="p">:</span> <span class="o">&amp;</span><span class="nx">protocol</span><span class="p">.</span><span class="nx">SocketHTTPDefinition</span><span class="p">{</span>
+		<span class="nx">DomainSuffix</span><span class="p">:</span> <span class="s">&quot;example.com&quot;</span><span class="p">,</span>
+	<span class="p">},</span>
+<span class="p">})</span>
+<span class="nx">http</span><span class="p">.</span><span class="nx">Serve</span><span class="p">(</span><span class="nx">li</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+</pre></div>

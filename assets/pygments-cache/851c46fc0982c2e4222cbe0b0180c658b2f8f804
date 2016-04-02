@@ -1,0 +1,21 @@
+<div class="highlight"><pre><span class="l-Scalar-Plain">applications</span><span class="p-Indicator">:</span>
+<span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">links</span>
+  <span class="l-Scalar-Plain">source</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">gdrive://stack-example/releases/links/v1.tar.gz</span>
+  <span class="l-Scalar-Plain">service</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">command</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">links</span><span class="p-Indicator">]</span>
+<span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">redis</span>
+  <span class="l-Scalar-Plain">source</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">gdrive://stack-example/releases/redis/v1.tar.gz</span>
+  <span class="l-Scalar-Plain">files</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">redis.conf</span><span class="p-Indicator">:</span> <span class="p-Indicator">|</span>
+      <span class="no">bind 127.0.0.1</span>
+      <span class="no">port 6379</span>
+      <span class="no">dir /opt/</span>
+      <span class="no">appendonly yes</span>
+      <span class="no">appendfilename &quot;redis.aof&quot;</span>
+      <span class="no">appendfsync everysec</span>
+      <span class="no">auto-aof-rewrite-percentage 100</span>
+      <span class="no">auto-aof-rewrite-min-size 64mb</span>
+      <span class="no">aof-load-truncated yes</span>
+  <span class="l-Scalar-Plain">service</span><span class="p-Indicator">:</span>
+    <span class="l-Scalar-Plain">command</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">redis-server</span><span class="p-Indicator">,</span> <span class="nv">redis.conf</span><span class="p-Indicator">]</span>
+</pre></div>

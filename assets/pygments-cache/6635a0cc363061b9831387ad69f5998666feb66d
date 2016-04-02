@@ -1,0 +1,2 @@
+<div class="highlight"><pre>stack watch s3://example-bucket/stack/machine-1.yaml
+</pre></div>

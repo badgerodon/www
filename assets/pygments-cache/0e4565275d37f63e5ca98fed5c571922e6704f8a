@@ -1,0 +1,2 @@
+<div class="highlight"><pre>tar -czf links.tar.gz -C dist links
+</pre></div>
