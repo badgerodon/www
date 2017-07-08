@@ -12,4 +12,4 @@ COPY ./assets /root/assets
 COPY ./tpl /root/tpl
 CMD ["./app"]
 
-EXPOSE 8080
+EXPOSE 80
