@@ -248,6 +248,9 @@ func main() {
 	log.SetFlags(0)
 
 	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
 	log.Printf("starting server on 127.0.0.1:%v\n", port)
 	err := http.ListenAndServe(fmt.Sprint(":", port), nil)
