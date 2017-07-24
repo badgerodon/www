@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/badgerodon/quadprog"
   packages = ["."]
-  revision = "b86fe1006389b1ffdc1be412e935aedabcd16e63"
+  revision = "99da70fa15d4eba1a9dc72b0ffed59e11858bd5f"
 
 [[projects]]
   branch = "master"
@@ -29,7 +29,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["html","html/atom"]
-  revision = "054b33e6527139ad5b1ec2f6232c3b175bd9a30c"
+  revision = "ab5485076ff3407ad2d02db054635913f017b0ed"
 
 [solve-meta]
   analyzer-name = "dep"
