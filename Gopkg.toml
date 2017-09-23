@@ -24,3 +24,12 @@
 [[constraint]]
   branch = "master"
   name = "github.com/badgerodon/rbsa"
+
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/badgerodon/quadprog"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/badgerodon/lalg"
