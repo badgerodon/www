@@ -1,0 +1,45 @@
+{{define "simulator/index"}}
+<div class="main-header">
+	<div class="breadcrumbs"><a href="/">Badgerodon</a> / <a href="/simulator">Simulator</a></div>
+</div>
+{{end}}
+<div class="main-body">
+
+
+<h1>The Badgerodon Simulator</h1>
+<p>
+	The Badgerodon Simulator is a library for running traditional, server-side Go programs in the
+    browser.
+</p>
+
+<ul class="toc">
+	<li><a href="#gopherjs">GopherJS</a></li>
+	<li><a href="#systemcalls">System Calls</a></li>
+</ul>
+<a name="gopherjs"></a>
+<h2>GopherJS</h2>
+<p>
+    The Badgerodon Simulator uses a modified version of the GopherJS compiler. Out of the box,
+    GopherJS is a surprisingly complete compiler, implementing nearly all of the language's features.
+
+</p>
+<p>
+    However, Go is more than simply a programming language. It also includes a robust standard library
+    and a common abstraction for low-level, operating system functionality. Nearly all software will,
+    at some point, rely on these libraries. Most programs need to access
+    the filesystem, listen or dial TCP sockets or access stdin or stdout, and none of this is possible
+    with GopherJS out of the box, because the browser is a sandboxed environment. It doesn't allow you
+    to read or write arbitrary files, or bind a network socket.
+</p>
+<p>
+    But what if, rather than merely failing any time an low-level system call was made, we simulated an
+    operating system with functionality available in the browser. This is what the Badgerodon Simulator
+    does.
+</p>
+
+<h2>System Calls</h2>
+<p>
+    The syscall and runtime packages
+</p>
+
+</div>
