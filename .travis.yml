@@ -6,6 +6,9 @@ env:
 go:
 - 1.11rc1
 
+# no need to run go get
+install: true
+
 script:
 - go build -v -o bin/badgerodon-www .
 
