@@ -8,8 +8,9 @@ services:
 - docker
 
 env:
-- GO111MODULE=on
-- DOCKER_IMAGE=gcr.io/doxsey-1/badgerodon-www:$TRAVIS_COMMIT
+  global:
+  - GO111MODULE=on
+  - DOCKER_IMAGE=gcr.io/doxsey-1/badgerodon-www:$TRAVIS_COMMIT
 
 go:
 - "1.11"
