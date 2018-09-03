@@ -1,0 +1,18 @@
+steps:
+- name: gcr.io/cloud-builders/go
+  args:
+  - build
+  - -o
+  - bin/badgerodon-www
+  - .
+  env:
+  - PROJECT_ROOT=github.com/badgerodon/www
+  - GO111MODULE=on
+- name: gcr.io/cloud-builders/docker
+  args:
+  - build
+  - -t
+  - gcr.io/$PROJECT_ID/badgerodon-www
+  - .
+images:
+- gcr.io/$PROJECT_ID/badgerodon-www

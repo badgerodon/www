@@ -249,10 +249,10 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "80"
+		port = "9001"
 	}
 
-	log.Printf("starting server on 127.0.0.1:%v\n", port)
+	log.Printf("starting server on :%v\n", port)
 	err := http.ListenAndServe(fmt.Sprint(":", port), nil)
 	if err != nil {
 		log.Fatalln(err)
