@@ -1,29 +1,24 @@
 language: go
-
 cache:
   directories:
   - "$HOME/google-cloud-sdk/"
-
 services:
 - docker
-
 env:
   global:
   - GO111MODULE=on
   - DOCKER_IMAGE=gcr.io/doxsey-1/badgerodon-www:$TRAVIS_COMMIT
-
 go:
-- "1.11"
-
+- '1.11'
 before_install:
-- if [ ! -d ${HOME}/google-cloud-sdk ]; then
-     curl https://sdk.cloud.google.com | bash;
+- if [ ! -d ${HOME}/google-cloud-sdk ]; then curl https://sdk.cloud.google.com | bash;
   fi
+- openssl aes-256-cbc -K $encrypted_2832a5f751fd_key -iv $encrypted_2832a5f751fd_iv
+  -in gcp-doxsey-1-travis-ci.json.enc -out /tmp/gcp-doxsey-1-travis-ci.json
+  -d
+- gcloud auth activate-service-account --key-file=/tmp/gcp-doxsey-1-travis-ci.json
 - gcloud auth configure-docker
-
-# no need to run go get
 install: true
-
 script:
 - go build -v -o bin/badgerodon-www .
 - docker build -t $DOCKER_IMAGE .

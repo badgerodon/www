@@ -13,3 +13,8 @@ Run Local:
 GCR Push:
 
     gcloud docker -- push gcr.io/badgerodon-173120/badgerodon-www:VERSION
+
+
+Update key for travis:
+
+    travis encrypt-file /home/caleb/Dropbox/keys/gcp-doxsey-1-travis-ci.json --add
