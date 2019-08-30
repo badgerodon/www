@@ -1,0 +1,10 @@
+github.com/badgerodon/lalg v0.0.0-20131221025232-d98d02968c5b h1:DebipT/HrvmO+hGE6LPnphZ28+fe5dkTjOgxND+wDmM=
+github.com/badgerodon/lalg v0.0.0-20131221025232-d98d02968c5b/go.mod h1:KJE7fIWVRfU1GQxeBHFJlUtrXsxboK2KxbyzTEjLWbo=
+github.com/badgerodon/quadprog v0.0.0-20170722135126-99da70fa15d4 h1:Kd8/F1rpafyZ9qn/yumntlq6ugWIpm3rzeeMKim61K0=
+github.com/badgerodon/quadprog v0.0.0-20170722135126-99da70fa15d4/go.mod h1:A9oxBime5oC2WvJ9fzaVUby/g6x+2AZDm6WvLthVRbs=
+github.com/badgerodon/rbsa v0.0.0-20131221025205-465af9ff0d02 h1:jJFizI4pzr4IquL3NwesVpwi4pnyYOD89bpT4KW5CJU=
+github.com/badgerodon/rbsa v0.0.0-20131221025205-465af9ff0d02/go.mod h1:YiazWXavVMpYvf5xqbaBt4LWzLlvk9B4RzhUGpJYIS4=
+github.com/badgerodon/statistics v0.0.0-20131221025257-85bdd4e56e4c h1:znvoHaKfVLHRBbwrHapJkz4lQiTvtLOgZWQ4M2QrPac=
+github.com/badgerodon/statistics v0.0.0-20131221025257-85bdd4e56e4c/go.mod h1:FRDUQ/ZQXLi/44kAf31FKJpcJklfxzTjbfiji+qA/iY=
+golang.org/x/net v0.0.0-20170922011244-0744d001aa84 h1:FFXeeSR9Hq1BBmpYJonYmvi9cTbUHJnNAASHkdlc0Zs=
+golang.org/x/net v0.0.0-20170922011244-0744d001aa84/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=

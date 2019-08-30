@@ -7,3 +7,5 @@ require (
 	github.com/badgerodon/statistics v0.0.0-20131221025257-85bdd4e56e4c
 	golang.org/x/net v0.0.0-20170922011244-0744d001aa84
 )
+
+go 1.13
