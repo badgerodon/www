@@ -1,3 +1,0 @@
-<div class="highlight"><pre>telnet localhost 6379
-keys *
-</pre></div>

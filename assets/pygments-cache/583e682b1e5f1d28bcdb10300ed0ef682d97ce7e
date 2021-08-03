@@ -1,8 +1,0 @@
-<div class="highlight"><pre><span class="l-Scalar-Plain">applications</span><span class="p-Indicator">:</span>
-<span class="p-Indicator">-</span> <span class="l-Scalar-Plain">name</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">example</span>
-  <span class="l-Scalar-Plain">source</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">s3://example-bucket/stack/releases/example/v123.tar.gz</span>
-  <span class="l-Scalar-Plain">service</span><span class="p-Indicator">:</span>
-    <span class="l-Scalar-Plain">command</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">bin/example some argument</span><span class="p-Indicator">]</span>
-    <span class="l-Scalar-Plain">environment</span><span class="p-Indicator">:</span>
-      <span class="l-Scalar-Plain">MY_VAR</span><span class="p-Indicator">:</span> <span class="s">&quot;some</span><span class="nv"> </span><span class="s">value&quot;</span>
-</pre></div>

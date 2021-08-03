@@ -1,2 +1,0 @@
-<div class="highlight"><pre>pyinstaller -F links.py
-</pre></div>

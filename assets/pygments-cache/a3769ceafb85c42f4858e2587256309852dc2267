@@ -1,2 +1,0 @@
-<div class="highlight"><pre>curl --data <span class="s1">&#39;url=http://labs.bible.org/api/?passage=John+3:16&#39;</span> localhost:5000/links
-</pre></div>

@@ -1,4 +1,0 @@
-<div class="highlight"><pre>stack cp config/machine-1.yaml gdrive://stack-example/config/machine-1.yaml
-stack cp links/links.tar.gz    gdrive://stack-example/releases/links/v1.tar.gz
-stack cp redis/redis.tar.gz    gdrive://stack-example/releases/redis/v1.tar.gz
-</pre></div>

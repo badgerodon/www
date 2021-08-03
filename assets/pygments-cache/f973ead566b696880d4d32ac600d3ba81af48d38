@@ -1,6 +1,0 @@
-<div class="highlight"><pre>14879 ?        Ss     0:00 /opt/badgerodon-stack/applications/links/links
-14881 ?        S      0:00  \_ /opt/badgerodon-stack/applications/links/links
-14889 ?        S      0:00      \_ /opt/badgerodon-stack/applications/links/links /opt/badgerodon-stack/applications/links/links
-14890 ?        Sl     0:02          \_ /opt/badgerodon-stack/applications/links/links /opt/badgerodon-stack/applications/links/links
-14883 ?        Ssl    0:01 /opt/badgerodon-stack/applications/redis/redis-server *:6379
-</pre></div>

@@ -1,3 +1,0 @@
-<div class="highlight"><pre>curl -L https://github.com/badgerodon/stack/releases/download/v0.3/stack-linux-amd64-v0.3.tar.gz <span class="se">\</span>
-<span class="p">|</span> sudo tar -C /usr/bin -xz
-</pre></div>

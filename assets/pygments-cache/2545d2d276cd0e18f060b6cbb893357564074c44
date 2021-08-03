@@ -1,9 +1,0 @@
-<div class="highlight"><pre>stack-example/
-  links/
-    links.py
-    build.sh
-    links.tar.gz
-  redis/
-    build.sh
-    redis.tar.gz
-</pre></div>

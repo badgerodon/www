@@ -1,2 +1,0 @@
-<div class="highlight"><pre>curl -L localhost:5000/links/<span class="o">{</span>THE_UUID_FROM_BEFORE<span class="o">}</span>
-</pre></div>
