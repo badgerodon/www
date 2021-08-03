@@ -1,8 +1,0 @@
-<div class="highlight"><pre>description &quot;The Badgerodon Stack&quot;
-
-start on (started networking)
-respawn
-
-env GOOGLE_DRIVE_CREDENTIALS_FILE=/opt/gdrive-credentials.json
-exec /usr/bin/stack watch gdrive://stack-example/config/machine-1.yaml
-</pre></div>

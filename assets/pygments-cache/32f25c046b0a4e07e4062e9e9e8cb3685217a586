@@ -1,3 +1,0 @@
-<div class="highlight"><pre>env <span class="nv">GOOGLE_DRIVE_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$HOME</span>/gdrive-credentials.json <span class="se">\</span>
-stack ls gdrive://
-</pre></div>

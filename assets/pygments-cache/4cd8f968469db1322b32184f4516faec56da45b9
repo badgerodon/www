@@ -1,2 +1,0 @@
-<div class="highlight"><pre>ps axf <span class="p">|</span> grep badgerodon-stack
-</pre></div>

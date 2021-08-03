@@ -1,3 +1,0 @@
-<div class="highlight"><pre>sudo env <span class="nv">GOOGLE_DRIVE_CREDENTIALS_FILE</span><span class="o">=</span>/opt/gdrive-credentials.json <span class="se">\</span>
-stack apply gdrive://stack-example/config/machine-1.yaml
-</pre></div>

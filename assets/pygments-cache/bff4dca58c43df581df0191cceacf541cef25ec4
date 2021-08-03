@@ -1,2 +1,0 @@
-<div class="highlight"><pre>scp <span class="nv">$HOME</span>/gdrive-credentials.json 192.168.56.101:/opt/gdrive-credentials.json
-</pre></div>
